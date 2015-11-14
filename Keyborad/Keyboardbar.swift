@@ -188,11 +188,9 @@ extension Keyboardbar:UITextViewDelegate{
     
      func textView(textView: UITextView, shouldChangeTextInRange range: NSRange, replacementText text: String) -> Bool{
         if text == "\n"{
-            if let textDidEndEditing = self.textDidEndEditing {
-                 textDidEndEditing(text: textView.text)
-                textView.text = nil
-                self.textDidChange(nil)
-            }
+            textDidEndEditing?(text: textView.text)
+            textView.text = nil
+            self.textDidChange(nil)
             return false
         }
         return true
