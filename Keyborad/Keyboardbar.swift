@@ -9,8 +9,6 @@
 import UIKit
 
 
- ///未实现输入文字控制textView停留cotentOffset的位置细节
-
 
 class Keyboardbar: UIView {
     
@@ -33,12 +31,15 @@ class Keyboardbar: UIView {
 
     private(set) var lineNumbers = 1
     
-    var maxLineNumbers = 5{
+    var maxLineNumbers:Int = 5{
         didSet{
             self.textDidChange(nil)
         }
     }
     
+    private var fixShowLineNumbers:Int {
+        return maxLineNumbers - 1
+    }
     /// txetView top 5 and bottom 5 margin
     private var allPadding:CGFloat{
         
@@ -138,18 +139,15 @@ class Keyboardbar: UIView {
     
     func textDidChange(notification:NSNotification?){
         lineNumbers =  lineNumbersForTextView(textView)
-        print(lineNumbers)
-        if lineNumbers >= maxLineNumbers{
+        if lineNumbers >= maxLineNumbers {
             lineNumbers = maxLineNumbers
-            let maxHeight = textViewHeightForLineNumbers(maxLineNumbers)
+            let maxHeight = textViewHeightForLineNumbers(fixShowLineNumbers)
             let adjustHeight = adjustHeightForContentHeight(maxHeight)
             checkUpdateLayout(adjustHeight)
             return
         }
-        print(textView.contentOffset)
         let contentHight = contentHeightForTextView(textView)
         let adjustHeight = adjustHeightForContentHeight(contentHight)
-        print(adjustHeight)
         checkUpdateLayout(adjustHeight)
     }
     
