@@ -24,18 +24,18 @@ class Keyboardbar: UIView {
     var textDidEndEditing:((text:String) ->())?
     
     @IBOutlet weak var textView: UITextView!
-  /// update layout
-   var updateLayout:((adjustHeight:CGFloat) ->())?
    
-    private var beforeHeight:CGFloat = 0.0
+    private var contentHeight:CGFloat = 44
 
     private(set) var lineNumbers = 1
     
     var maxLineNumbers:Int = 5{
         didSet{
-            self.textDidChange(nil)
+            self.updateLayout()
         }
     }
+    
+    private(set) var showLineNumbers:Int = 1
     
     private var fixShowLineNumbers:Int {
         return maxLineNumbers - 1
@@ -61,6 +61,7 @@ class Keyboardbar: UIView {
    private lazy var modalView:UIButton = {
         [unowned self] in
         let view = UIButton()
+//        view.autoresizingMask = [.FlexibleWidth,.FlexibleHeight]
         view.addTarget(self, action: "dismiss", forControlEvents: .TouchUpInside)
         return view
     }()
@@ -71,10 +72,6 @@ class Keyboardbar: UIView {
     
     class func keyboardbar() -> Keyboardbar{
         return  NSBundle.mainBundle().loadNibNamed("Keyboardbar", owner: self, options: nil).last as! Keyboardbar
-    }
-    
-    override func intrinsicContentSize() -> CGSize {
-        return CGSize(width: UIScreen.mainScreen().bounds.width, height: 44)
     }
     
     override init(frame: CGRect) {
@@ -102,6 +99,8 @@ class Keyboardbar: UIView {
     override func awakeFromNib() {
         self.textView.delegate = self
     }
+    
+    
     
     //pragma mark - Keyboardbar animation helpers
     
@@ -138,23 +137,40 @@ class Keyboardbar: UIView {
     }
     
     func textDidChange(notification:NSNotification?){
-        lineNumbers =  lineNumbersForTextView(textView)
-        if lineNumbers >= maxLineNumbers {
-            lineNumbers = maxLineNumbers
-            let maxHeight = textViewHeightForLineNumbers(fixShowLineNumbers)
-            let adjustHeight = adjustHeightForContentHeight(maxHeight)
-            checkUpdateLayout(adjustHeight)
-            return
-        }
-        let contentHight = contentHeightForTextView(textView)
-        let adjustHeight = adjustHeightForContentHeight(contentHight)
-        checkUpdateLayout(adjustHeight)
+
+        updateLayout()
     }
     
-    private  func checkUpdateLayout(adjustHeight:CGFloat){
-        if beforeHeight == adjustHeight{return}
-        beforeHeight = adjustHeight
-        updateLayout?(adjustHeight: adjustHeight)
+    private func updateLayout(){
+        lineNumbers =  lineNumbersForTextView(textView)
+        showLineNumbers = lineNumbers
+        
+        var boundHeight:CGFloat = 0
+        if lineNumbers >= maxLineNumbers {
+            showLineNumbers = maxLineNumbers
+            boundHeight = textViewHeightForLineNumbers(fixShowLineNumbers)
+        }else{
+            boundHeight =  contentHeightForTextView(self.textView)
+        }
+        
+        if (boundHeight == textView.frame.height){return}
+        let adjustHeight = adjustHeightForContentHeight(boundHeight)
+        
+        contentHeight = adjustHeight
+        self.invalidateIntrinsicContentSize()
+        
+        // TextView avoid skew rolling position
+        self.textView.scrollEnabled = false
+        UIView.animateWithDuration(0.25, delay: 0, options: [.CurveLinear], animations: {
+            self.layoutIfNeeded()
+        }) { (completion) -> Void in
+            self.textView.scrollEnabled = true
+        }
+        
+    }
+    
+    override func intrinsicContentSize() -> CGSize {
+        return CGSize(width: UIScreen.mainScreen().bounds.width, height: contentHeight)
     }
     
     private func contentHeightForTextView(textViw:UITextView)->CGFloat{
@@ -172,15 +188,15 @@ class Keyboardbar: UIView {
     
     ///Computing text lines
     private func lineNumbersForTextView(textView:UITextView)->Int{
-        return Int((contentHeightForTextView(textView) - allPadding ) / lineHeight)
+        
+        return  Int(textView.contentSize.height / textView.font!.lineHeight)
     }
     
     ///Screen rotation to recalculate the height
     override func layoutSubviews() {
         super.layoutSubviews()
-        self.textDidChange(nil)
+        self.updateLayout()
     }
-    
     
 }
 
@@ -190,7 +206,7 @@ extension Keyboardbar:UITextViewDelegate{
         if text == "\n"{
             textDidEndEditing?(text: textView.text)
             textView.text = nil
-            self.textDidChange(nil)
+            self.updateLayout()
             return false
         }
         return true

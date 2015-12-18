@@ -25,19 +25,6 @@ class KeyboardViewController: UIViewController {
         let keyboarbarBottomConstraintToView = NSLayoutConstraint(item: keyboarbar, attribute: .Bottom, relatedBy: .Equal, toItem: self.view, attribute: .Bottom, multiplier: 1.0, constant: 0)
         self.view.addConstraint(keyboarbarBottomConstraintToView)
 
-        let keyboarbarHeightConstraintToView = NSLayoutConstraint(item: keyboarbar, attribute: .Height, relatedBy: .Equal, toItem: nil, attribute: .NotAnAttribute, multiplier: 1.0, constant:44)
-        self.view.addConstraint(keyboarbarHeightConstraintToView)
-        self.keyboarbarHeightConstraintToView = keyboarbarHeightConstraintToView
-        
-        keyboarbar.updateLayout = {
-            (contentHeight:CGFloat) in
-            self.keyboarbarHeightConstraintToView?.constant = contentHeight
-            UIView.beginAnimations(nil, context: nil)
-            UIView.setAnimationDuration(0.25)
-            UIView.setAnimationCurve(.EaseInOut)
-            self.view.layoutIfNeeded()
-            UIView.commitAnimations()
-        }
         
         keyboarbar.selectMenu = {
             (keyboarbar,index:Int) in
